@@ -128,11 +128,6 @@ func main() {
 	}
 
 	// Push the image and tags to the registry
-	// for _, tag := range vargs.Tag.Slice() {
-	// 	name := fmt.Sprintf("%s:%s", vargs.Repo, tag)
-	// 	if tag == "latest" {
-	// 		name = vargs.Repo
-	// 	}
 	cmd = exec.Command("/usr/bin/docker", "push", vargs.Repo)
 	cmd.Dir = workspace.Path
 	cmd.Stdout = os.Stdout
@@ -142,7 +137,6 @@ func main() {
 	if err != nil {
 		os.Exit(1)
 	}
-	// }
 }
 
 // Trace writes each command to standard error (preceded by a ‘$ ’) before it

@@ -4,7 +4,7 @@ The following parameters are used to configure this plugin:
 * `registry` - authenticates to this registry (defaults to `gcr.io`)
 * `token` - json key file
 * `repo` - repository name for the image
-* `tag` - repository tag for the image
+* `tag` - repository tag for the image (defaults to `latest`)
 * `storage_driver` - use `aufs`, `devicemapper`, `btrfs` or `overlay` driver
 
 The following is a sample Docker configuration in your .drone.yml file:
@@ -13,11 +13,17 @@ The following is a sample Docker configuration in your .drone.yml file:
 publish:
   docker:
     registry: gcr.io
-    token: |
-      $$GLOUD_KEY
     repo: foo/bar
     tag: latest
     file: Dockerfile
+    token: >
+      {
+        "private_key_id": "...",
+        "private_key": "...",
+        "client_email": "...",
+        "client_id": "...",
+        "type": "..."
+      }
 ```
 
 You may want to dynamically tag your image. Use the `$$BRANCH`, `$$COMMIT` and `$$BUILD_NUMBER` variables to tag your image with the branch, commit sha or build number:
@@ -26,8 +32,6 @@ You may want to dynamically tag your image. Use the `$$BRANCH`, `$$COMMIT` and `
 publish:
   gcr:
     registry: gcr.io
-    token: |
-      $$GLOUD_KEY
     repo: foo/bar
     tag: $$BRANCH
     file: Dockerfile
@@ -39,8 +43,6 @@ Or you may prefer to build an image with multiple tags:
 publish:
   gcr:
     registry: gcr.io
-    token: |
-      $$GLOUD_KEY
     repo: foo/bar
     tag:
       - latest
@@ -51,6 +53,45 @@ publish:
 Note that in the above example we quote the version numbers. If the yaml parser interprets the value as a number it will cause a parsing error.
 
 ## JSON Key
+
+Drone uses a [JSON key](https://developers.google.com/console/help/new/#serviceaccounts) to authenticate to the Google Container Engine. We strongly recommend using a [folded style](http://www.yaml.org/spec/1.2/spec.html#id2796251) scalar type with proper indentation when setting the token value:
+
+```
+publish:
+  gce:
+    token: >
+      {
+        "private_key_id": "...",
+        "private_key": "...",
+        "client_email": "...",
+        "client_id": "...",
+        "type": "..."
+      }
+```
+
+If you prefer to store your JSON key in the encrypted `.drone.sec` file you use a folded style scalar type as well in the `.drone.sec` file:
+
+```
+environment:
+  GOOGLE_KEY: >
+    {
+      "private_key_id": "...",
+      "private_key": "...",
+      "client_email": "...",
+      "client_id": "...",
+      "type": "..."
+    }
+
+```
+
+And in the `.drone.yml` file when referencing the variable:
+
+```
+publish:
+  gce:
+    token: >
+      $$GOOGLE_KEY
+```
 
 ## Troubleshooting
 
