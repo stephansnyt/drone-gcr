@@ -33,7 +33,7 @@ func main() {
 
 	// Repository name should have gcr prefix
 	if len(vargs.Registry) == 0 {
-		vargs.Registry = "https://gcr.io"
+		vargs.Registry = "gcr.io"
 	}
 	// Set the Dockerfile name
 	if len(vargs.File) == 0 {
