@@ -20,7 +20,7 @@ publish:
       branch: master
 
 plugin:
-  name: Docker
+  name: Google Container Registry
   desc: Build and Publish images to the Google Container Registry.
   type: publish
   image: plugins/drone-gcr
