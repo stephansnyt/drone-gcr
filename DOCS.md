@@ -50,7 +50,7 @@ When setting your token in the `.drone.yml` file you must use [folded block scal
 
 ```
 publish:
-  gce:
+  gcr:
     token: >
       {
         "private_key_id": "...",
@@ -65,7 +65,7 @@ When injecting secrets you must also use a folded block scalar:
 
 ```
 publish:
-  gce:
+  gcr:
     token: >
       $$GOOGLE_KEY
 ```
