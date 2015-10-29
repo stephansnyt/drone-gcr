@@ -1,21 +1,19 @@
-Use the Docker plugin to build and push Docker images to a registry.
+Use this plugin to build and push Docker images to the Google Container Registry (GCR). In order to use GCR you will first need billing enabled and generate a [JSON token](https://developers.google.com/console/help/new/#serviceaccounts).
+
 The following parameters are used to configure this plugin:
 
 * `registry` - authenticates to this registry (defaults to `gcr.io`)
-* `token` - json key file
+* `token` - json token
 * `repo` - repository name for the image
 * `tag` - repository tag for the image (defaults to `latest`)
 * `storage_driver` - use `aufs`, `devicemapper`, `btrfs` or `overlay` driver
 
-The following is a sample Docker configuration in your .drone.yml file:
+Sample configuration:
 
 ```yaml
 publish:
-  docker:
-    registry: gcr.io
+  gcr:
     repo: foo/bar
-    tag: latest
-    file: Dockerfile
     token: >
       {
         "private_key_id": "...",
@@ -26,35 +24,29 @@ publish:
       }
 ```
 
-You may want to dynamically tag your image. Use the `$$BRANCH`, `$$COMMIT` and `$$BUILD_NUMBER` variables to tag your image with the branch, commit sha or build number:
-
-```yaml
-publish:
-  gcr:
-    registry: gcr.io
-    repo: foo/bar
-    tag: $$BRANCH
-    file: Dockerfile
-```
-
-Or you may prefer to build an image with multiple tags:
+Sample configuration using multiple tags:
 
 ```
 publish:
   gcr:
-    registry: gcr.io
     repo: foo/bar
     tag:
       - latest
       - "1.0.1"
       - "1.0"
+    token: >
+      {
+        "private_key_id": "...",
+        "private_key": "...",
+        "client_email": "...",
+        "client_id": "...",
+        "type": "..."
+      }
 ```
 
-Note that in the above example we quote the version numbers. If the yaml parser interprets the value as a number it will cause a parsing error.
+## JSON Token
 
-## JSON Key
-
-Drone uses a [JSON key](https://developers.google.com/console/help/new/#serviceaccounts) to authenticate to the Google Container Engine. We strongly recommend using a [folded style](http://www.yaml.org/spec/1.2/spec.html#id2796251) scalar type with proper indentation when setting the token value:
+When setting your token in the `.drone.yml` file you must use [folded block scalars](http://www.yaml.org/spec/1.2/spec.html#id2796251) to avoid parsing errors:
 
 ```
 publish:
@@ -69,28 +61,37 @@ publish:
       }
 ```
 
-If you prefer to store your JSON key in the encrypted `.drone.sec` file you use a folded style scalar type as well in the `.drone.sec` file:
-
-```
-environment:
-  GOOGLE_KEY: >
-    {
-      "private_key_id": "...",
-      "private_key": "...",
-      "client_email": "...",
-      "client_id": "...",
-      "type": "..."
-    }
-
-```
-
-And in the `.drone.yml` file when referencing the variable:
+When injecting secrets you must also use a folded block scalar:
 
 ```
 publish:
   gce:
     token: >
       $$GOOGLE_KEY
+```
+
+When defining secrets in a `.drone.sec` file you must also use folded block scalars. Please note that you should either place your JSON string on a single line:
+
+```
+environment:
+  GOOGLE_KEY: >
+    { "private_key_id": "...", "private_key": "..." ... }
+
+```
+
+Or you must ensure all lines have the exact same indentation:
+
+```
+environment:
+  GOOGLE_KEY: >
+    {
+    "private_key_id": "...",
+    "private_key": "...",
+    "client_email": "...",
+    "client_id": "...",
+    "type": "..."
+    }
+
 ```
 
 ## Troubleshooting
