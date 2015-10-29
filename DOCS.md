@@ -1,4 +1,4 @@
-Use this plugin to build and push Docker images to the Google Container Registry (GCR). In order to use GCR you will first need billing enabled and generate a [JSON token](https://developers.google.com/console/help/new/#serviceaccounts).
+Use this plugin to build and push Docker images to the Google Container Registry (GCR). Please read the GCR [documentation](https://cloud.google.com/container-registry/) before you begin. You will need to generate a [JSON token](https://developers.google.com/console/help/new/#serviceaccounts) to authenticate to the registry and push images.
 
 The following parameters are used to configure this plugin:
 
