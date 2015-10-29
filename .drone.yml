@@ -15,7 +15,7 @@ publish:
     username: drone
     password: $$DOCKER_PASS
     email: $$DOCKER_EMAIL
-    repo: plugins/drone-gce
+    repo: plugins/drone-gcr
     when:
       branch: master
 
@@ -23,7 +23,7 @@ plugin:
   name: Docker
   desc: Build and Publish images to the Google Container Registry.
   type: publish
-  image: plugins/drone-gce
+  image: plugins/drone-gcr
   labels:
     - docker
     - image
