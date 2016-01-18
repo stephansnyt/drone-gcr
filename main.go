@@ -21,7 +21,13 @@ type Docker struct {
 	Context  string   `json:"context"`
 }
 
+var (
+	buildDate string
+)
+
 func main() {
+	fmt.Printf("Drone GCR Plugin built at %s\n", buildDate)
+
 	workspace := plugin.Workspace{}
 	build := plugin.Build{}
 	vargs := Docker{}
