@@ -22,11 +22,11 @@ type Docker struct {
 }
 
 var (
-	buildDate string
+	buildCommit string
 )
 
 func main() {
-	fmt.Printf("Drone GCR Plugin built at %s\n", buildDate)
+	fmt.Printf("Drone GCR Plugin built from %s\n", buildCommit)
 
 	workspace := plugin.Workspace{}
 	build := plugin.Build{}
