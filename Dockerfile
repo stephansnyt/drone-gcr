@@ -2,7 +2,7 @@
 #
 #     docker build --rm=true -t plugins/drone-gcr .
 
-FROM rancher/docker:1.8.1
+FROM rancher/docker:1.10.0
 
 ADD drone-gcr /go/bin/
 VOLUME /var/lib/docker
