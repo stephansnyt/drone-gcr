@@ -9,7 +9,7 @@ pipeline:
       - make build
       - make test
   docker:
-    storage_driver: overlay
+    image: plugins/docker
     repo: plugins/drone-gcr
     tag: [ "latest" ]
     username: ${DOCKER_USERNAME}
