@@ -12,6 +12,8 @@ pipeline:
     storage_driver: overlay
     repo: plugins/drone-gcr
     tag: [ "latest" ]
+    username: ${DOCKER_USERNAME}
+    password: ${DOCKER_PASSWORD}
     when:
       branch: release/0.4
       event: push
