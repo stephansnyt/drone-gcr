@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
 )
 
@@ -80,7 +79,8 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		logrus.Fatal(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 }
 
