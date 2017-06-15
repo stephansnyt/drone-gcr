@@ -8,7 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/drone/drone-plugin-go/plugin"
+	"github.com/Sirupsen/logrus"
+	"github.com/urfave/cli"
 )
 
 type Docker struct {
@@ -16,9 +17,16 @@ type Docker struct {
 	Storage  string   `json:"storage_driver"`
 	Token    string   `json:"token"`
 	Repo     string   `json:"repo"`
-	Tag      StrSlice `json:"tag"`
+	Tag      []string `json:"tag"`
 	File     string   `json:"file"`
 	Context  string   `json:"context"`
+}
+
+type BUILD struct {
+	Number string
+	Commit string
+	Branch string
+	Tag    string
 }
 
 var (
@@ -28,14 +36,69 @@ var (
 func main() {
 	fmt.Printf("Drone GCR Plugin built from %s\n", buildCommit)
 
-	workspace := plugin.Workspace{}
-	build := plugin.Build{}
-	vargs := Docker{}
+	app := cli.NewApp()
+	app.Name = "gke plugin"
+	app.Usage = "gke plugin"
+	app.Action = run
+	app.Version = fmt.Sprintf("1.0.0-%s", buildCommit)
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:   "registry",
+			Usage:  "",
+			EnvVar: "PLUGIN_REGISTER",
+		},
+		cli.StringFlag{
+			Name:   "storage_driver",
+			Usage:  "",
+			EnvVar: "PLUGIN_STORAGE_DRIVER",
+		},
+		cli.StringFlag{
+			Name:   "token",
+			Usage:  "",
+			EnvVar: "PLUGIN_TOKEN",
+		},
+		cli.StringFlag{
+			Name:   "repo",
+			Usage:  "",
+			EnvVar: "PLUGIN_REPO",
+		},
+		cli.StringSliceFlag{
+			Name:   "tag",
+			Usage:  "",
+			EnvVar: "PLUGIN_TAG",
+		},
+		cli.StringFlag{
+			Name:   "file",
+			Usage:  "",
+			EnvVar: "PLUGIN_FILE",
+		},
+		cli.StringFlag{
+			Name:   "context",
+			Usage:  "",
+			EnvVar: "PLUGIN_CONTEXT",
+		},
+	}
 
-	plugin.Param("workspace", &workspace)
-	plugin.Param("build", &build)
-	plugin.Param("vargs", &vargs)
-	plugin.MustParse()
+	if err := app.Run(os.Args); err != nil {
+		logrus.Fatal(err)
+	}
+}
+
+func run(c *cli.Context) error {
+	vargs := Docker{}
+	vargs.Registry = c.String("registry")
+	vargs.Storage = c.String("storage_driver")
+	vargs.Token = c.String("token")
+	vargs.Repo = c.String("repo")
+	vargs.Tag = c.StringSlice("tag")
+	vargs.File = c.String("file")
+	vargs.Context = c.String("context")
+
+	build := BUILD{}
+	build.Number = c.String("drone-build-number")
+	build.Commit = c.String("drone-commit")
+	build.Branch = c.String("drone-branch")
+	build.Tag = c.String("drone-tag")
 
 	// Repository name should have gcr prefix
 	if len(vargs.Registry) == 0 {
@@ -50,8 +113,8 @@ func main() {
 		vargs.Context = "."
 	}
 	// Set the Tag value
-	if vargs.Tag.Len() == 0 {
-		vargs.Tag = StrSlice{[]string{"latest"}}
+	if len(vargs.Tag) == 0 {
+		vargs.Tag = []string{"latest"}
 	}
 	// Concat the Registry URL and the Repository name if necessary
 	if strings.Count(vargs.Repo, "/") == 1 {
@@ -93,10 +156,14 @@ func main() {
 
 	// Login to Docker
 	cmd := exec.Command("/usr/bin/docker", "login", "-u", "_json_key", "-p", vargs.Token, "-e", "chunkylover53@aol.com", vargs.Registry)
-	cmd.Dir = workspace.Path
+	wd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("Error while getting working directory: %s\n", err)
+	}
+	cmd.Dir = wd
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
 		fmt.Println("Login failed.")
 		os.Exit(1)
@@ -104,7 +171,7 @@ func main() {
 
 	// Build the container
 	cmd = exec.Command("/usr/bin/docker", "build", "--pull=true", "--rm=true", "-f", vargs.File, "-t", build.Commit, vargs.Context)
-	cmd.Dir = workspace.Path
+	cmd.Dir = wd
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	trace(cmd)
@@ -114,7 +181,7 @@ func main() {
 	}
 
 	// Creates image tags
-	for _, tag := range vargs.Tag.Slice() {
+	for _, tag := range vargs.Tag {
 		// create the full tag name
 		tag_ := fmt.Sprintf("%s:%s", vargs.Repo, tag)
 		if tag == "latest" {
@@ -123,7 +190,7 @@ func main() {
 
 		// tag the build image sha
 		cmd = exec.Command("/usr/bin/docker", "tag", build.Commit, tag_)
-		cmd.Dir = workspace.Path
+		cmd.Dir = wd
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		trace(cmd)
@@ -135,7 +202,7 @@ func main() {
 
 	// Push the image and tags to the registry
 	cmd = exec.Command("/usr/bin/docker", "push", vargs.Repo)
-	cmd.Dir = workspace.Path
+	cmd.Dir = wd
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	trace(cmd)
@@ -143,6 +210,7 @@ func main() {
 	if err != nil {
 		os.Exit(1)
 	}
+	return nil
 }
 
 // Trace writes each command to standard error (preceded by a ‘$ ’) before it
